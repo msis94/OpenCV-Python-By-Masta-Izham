@@ -1,0 +1,68 @@
+import cv2
+import numpy as np
+import os
+
+# IMPORT LBPH MODEL
+recognizer = cv2.face.LBPHFaceRecognizer_create()
+
+# READ WEIGHT OF LPBH TRAINED MODEL
+recognizer.read('/home/goblin/Desktop/trainer/trainer.yml')
+
+# LOCATION OF HAAR CASCADE FRONTAL FILE
+cascadePath = "/home/goblin/Desktop/opencv-haar/haar-file/haarcascade_frontalface_default.xml"
+
+# INITIATE HAAR CASCADE PRETRAINED MODEL
+faceCascade = cv2.CascadeClassifier(cascadePath);
+
+# TO EDIT THE FONT USE IN RECTANGLE
+font = cv2.FONT_HERSHEY_SIMPLEX
+
+# DECLARATION FOR ID COUNTER
+id = 0
+
+# DATABASE OF THE EMPLOYEE (EG: 6 = IZHAM)
+names = ['Dollah','Mamak','Elizabeth','Meor','Khabib','Razak','Izham','Gebu','Milo','Tompok']
+
+# RECORD THE VIDEO USING FIRST CAMERA
+cam = cv2.VideoCapture(0)
+
+print(cam.get(3))
+print(cam.get(4))
+
+# MINIMUM SIZE TO BE RECOGNIZED AS A FACE
+minW = int(cam.get(3)/3)
+minH = int(cam.get(4)/3)
+
+while True:
+    ret, img =cam.read()
+    #     img = cv2.flip(img, -1) # Flip vertically
+    gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+
+    faces = faceCascade.detectMultiScale(gray, 1.2, 5, minSize = (minW, minH))
+
+    for(x,y,w,h) in faces:
+        cv2.rectangle(img, (x,y), (x+w,y+h), (0,255,0), 2)
+        id, confidence = recognizer.predict(gray[y:y+h,x:x+w])
+
+        accuracy = round(100 - confidence)
+
+
+    # Check if confidence is less them 100 ==> "0" is perfect match
+        if (accuracy > 60):
+            id = names[id]
+        else:
+            id = "unknown"
+
+        # cv2.putText(img, 'Izham Pass : Door Opens', (10,40), font, 1, (255,255,255), 2)
+        cv2.putText(img, str(id), (x,y-5), font, 1, (255,255,255), 2)
+        cv2.putText(img, "{} %".format(str(accuracy)), (x+5,y+h-5), font, 1, (255,255,0), 1)
+
+    cv2.namedWindow('camera', cv2.WINDOW_NORMAL)
+    cv2.imshow('camera',img)
+    k = cv2.waitKey(10) & 0xff # Press 'ESC' for exiting video
+    if k == 27:
+        break
+# Do a bit of cleanup
+print("\n [INFO] Exiting Program and cleanup stuff")
+cam.release()
+cv2.destroyAllWindows()
